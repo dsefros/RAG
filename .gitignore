@@ -25,3 +25,4 @@ qdrant_storage/
 models/
 models/
 *:Zone.Identifier
+collected_code.txt
