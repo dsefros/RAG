@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Env
+.env
+
+# Qdrant (ОБЯЗАТЕЛЬНО)
+qdrant_storage/
+
+# Data (кроме samples)
+data/*
+!data/samples/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+qdrant_storage/
