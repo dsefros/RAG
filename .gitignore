@@ -22,3 +22,6 @@ Thumbs.db
 .vscode/
 .idea/
 qdrant_storage/
+models/
+models/
+*:Zone.Identifier
