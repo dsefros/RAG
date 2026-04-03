@@ -5,15 +5,17 @@ from typing import Any
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
+    ChangeAliasesOperation,
     CreateAlias,
+    CreateAliasOperation,
     DeleteAlias,
+    DeleteAliasOperation,
     Distance,
     FieldCondition,
     Filter,
     MatchAny,
     MatchValue,
     PointStruct,
-    UpdateCollectionAliasesOperation,
     VectorParams,
 )
 
@@ -65,20 +67,35 @@ class QdrantStore:
                 return item.collection_name
         return None
 
+    def _update_aliases(self, operations: list[Any]) -> None:
+        try:
+            self.client.update_collection_aliases(change_aliases_operations=operations)
+        except TypeError:
+            # Compatibility with clients expecting wrapped ChangeAliasesOperation payload
+            self.client.update_collection_aliases(
+                change_aliases_operations=ChangeAliasesOperation(actions=operations)
+            )
+
     def switch_alias(self, alias: str, new_collection: str) -> None:
         current = self.get_alias_target(alias)
-        ops: list[UpdateCollectionAliasesOperation] = []
+        ops: list[Any] = []
         if current:
-            ops.append(UpdateCollectionAliasesOperation(delete_alias=DeleteAlias(alias_name=alias)))
-        ops.append(UpdateCollectionAliasesOperation(create_alias=CreateAlias(alias_name=alias, collection_name=new_collection)))
-        self.client.update_collection_aliases(change_aliases_operations=ops)
+            ops.append(DeleteAliasOperation(delete_alias=DeleteAlias(alias_name=alias)))
+        ops.append(
+            CreateAliasOperation(
+                create_alias=CreateAlias(alias_name=alias, collection_name=new_collection)
+            )
+        )
+        self._update_aliases(ops)
 
     def ensure_alias(self, alias: str, collection: str) -> None:
         target = self.get_alias_target(alias)
         if target is None:
-            self.client.update_collection_aliases(
-                change_aliases_operations=[
-                    UpdateCollectionAliasesOperation(create_alias=CreateAlias(alias_name=alias, collection_name=collection)),
+            self._update_aliases(
+                [
+                    CreateAliasOperation(
+                        create_alias=CreateAlias(alias_name=alias, collection_name=collection)
+                    )
                 ]
             )
 
