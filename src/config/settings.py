@@ -63,6 +63,7 @@ class ChunkingSettings(BaseModel):
 class ReindexSettings(BaseModel):
     keep_last_versions: int = 2
     validate_min_points: int = 1
+    upsert_batch_size: int = Field(default=64, ge=1)
 
 
 class AuthSettings(BaseModel):

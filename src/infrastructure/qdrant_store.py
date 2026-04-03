@@ -47,6 +47,16 @@ class QdrantStore:
     def upsert(self, collection: str, points: list[PointStruct]) -> None:
         self.client.upsert(collection_name=collection, points=points)
 
+    def upsert_batched(self, collection: str, points: list[PointStruct], batch_size: int) -> int:
+        if batch_size < 1:
+            raise ValueError("batch_size must be >= 1")
+        completed_batches = 0
+        for start in range(0, len(points), batch_size):
+            batch = points[start : start + batch_size]
+            self.client.upsert(collection_name=collection, points=batch)
+            completed_batches += 1
+        return completed_batches
+
     def build_access_filter(self, allowed_groups: list[str], status: str = "active") -> Filter:
         return Filter(
             must=[

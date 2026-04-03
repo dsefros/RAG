@@ -26,12 +26,20 @@ class ReindexService:
         points, report = self.pipeline.build_points(files, version)
 
         self.qdrant.create_collection(version, vector_size=1024)
+        total_batches = 0
+        completed_batches = 0
+        batch_size = self.settings.reindex.upsert_batch_size
         if points:
-            self.qdrant.upsert(version, points)
+            total_batches = (len(points) + batch_size - 1) // batch_size
+            completed_batches = self.qdrant.upsert_batched(version, points, batch_size)
 
         count = self.qdrant.count(version)
         report["points_in_collection"] = count
         report["new_collection"] = version
+        report["upsert_batch_size"] = batch_size
+        report["total_points"] = len(points)
+        report["total_batches"] = total_batches
+        report["completed_batches"] = completed_batches
 
         if count < self.settings.reindex.validate_min_points:
             raise ReindexError(f"Validation failed: points={count}")
